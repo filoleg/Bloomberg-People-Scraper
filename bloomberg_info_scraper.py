@@ -7,22 +7,34 @@ import time
 
 start_time = time.time()
 
+def auth_session(link):
+    s = requests.Session()
+    page0 = s.get(link)
+    soup = BeautifulSoup(page0.text)
+    personLink1 = "http://investing.businessweek.com/research/"
+    personLink2 = soup.find('a',text="See Board Relationships")['href']
+    personLink = personLink1 + personLink2[6:]
+    return [personLink,s]
+
 def main():
-    link = input("please, enter the webpage address: ")
-    page = requests.post(link)
+    link = input("Please, enter the webpage address: ")
+    session = requests.Session()
+    isPrivate = input("Is it one of those private pages that did not work in the old version?[y/n]: ")
+    if isPrivate == "y":
+        linkPlusSession = auth_session(link)
+        link = linkPlusSession[0]
+        session = linkPlusSession[1]
+    page = session.post(link)
     soup = BeautifulSoup(page.text)
     names_raw = soup.find_all('div', class_="name")
     title_raw = soup.find_all('div', class_="title")
-    #detail_raw = soup.find_all('td', class_="detail")
     large_detail_raw = soup.find_all('td', class_="largeDetail")
     companies_raw = soup.find_all('a')
     main_name = names_raw[0].get_text()#name of the main dude, name .xls file after it
     name_end_index = main_name.find('\xa0')#getting rid of that RETURN TO bs at the end of the name tag 
     main_name = main_name[:name_end_index-1]#
     main_title = title_raw[0].get_text()
-    #details = []
-    #for element in detail_raw:
-    #    details.append(element.get_text())
+
     large_details = []
     for element in large_detail_raw:
         large_details.append(element.get_text())
